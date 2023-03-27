@@ -30,6 +30,12 @@ Object.keys(subsectors).map((cell: string) => {
           });
 
           count++;
+        }else if (industryValue.toLowerCase().split(' ').some((r: string) => subsectorValue.toLowerCase().split(' ').indexOf(r) >= 0)){
+          XLSX.utils.sheet_add_aoa(industries, [[subsectorId]], {
+            origin: `B${industryId}`,
+          });
+
+          count++;
         }
       }
     });
