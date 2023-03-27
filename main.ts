@@ -4,52 +4,65 @@ import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.19.2/package/xlsx.mjs";
 const subsectors = XLSX.readFile("linkedin_subsectors.csv").Sheets["Sheet1"];
 const industries = XLSX.readFile("linkedin_industries.csv").Sheets["Sheet1"];
 
-let count = 0;
+const foundIds: number[] = [];
 
-Object.keys(subsectors).map((cell: string) => {
-	const { subsectorId, subsectorType, subsectorValue } = {
-		subsectorId: Number(cell.slice(1)),
-		subsectorType: subsectors[cell].t,
-		subsectorValue: subsectors[cell].v,
+Object.keys(industries).map((cell: string) => {
+	const { industryId, industryType, industryValue } = {
+		industryId: Number(cell.slice(1)),
+		industryType: industries[cell].t,
+		industryValue: industries[cell].v,
 	};
 
-	if (subsectorType === "s" && subsectorValue) {
-		Object.keys(industries).map((cell: string) => {
-			const { industryId, industryType, industryValue } = {
-				industryId: Number(cell.slice(1)),
-				industryType: industries[cell].t,
-				industryValue: industries[cell].v,
+	if (industryType === "s" && industryType) {
+		Object.keys(subsectors).map((cell: string) => {
+			const { subsectorId, subsectorType, subsectorValue } = {
+				subsectorId: Number(cell.slice(1)),
+				subsectorType: subsectors[cell].t,
+				subsectorValue: subsectors[cell].v,
 			};
 
-			if (industryType === "s" && industryValue) {
-				const industryValues: string[] = industryValue
-					.toLowerCase()
-					.split(" ")
-					.filter((word: string) => word !== "and")
-					.map((word: string) => word.replaceAll(",", ""));
-
+			if (
+				subsectorType === "s" &&
+				subsectorValue &&
+				!foundIds.includes(industryId)
+			) {
 				const subsectorValues: string[] = subsectorValue
 					.toLowerCase()
 					.split(" ")
 					.filter((word: string) => word !== "and")
 					.map((word: string) => word.replaceAll(",", ""));
 
+				const industryValues: string[] = industryValue
+					.toLowerCase()
+					.split(" ")
+					.filter((word: string) => word !== "and")
+					.map((word: string) => word.replaceAll(",", ""));
+
+				if (
+					subsectorValues.join(" ") === "capital markets" &&
+					industryValues.join(" ") === "capital markets"
+				) {
+					console.log(subsectorValues, industryValues);
+				}
+
 				// prioritize exact match
-				if (industryValues.join(' ') === subsectorValues.join(' ')) {
+				if (subsectorValues.join(" ") === industryValues.join(" ")) {
 					XLSX.utils.sheet_add_aoa(industries, [[subsectorId]], {
 						origin: `B${industryId}`,
 					});
 
-					count++;
+					foundIds.push(industryId);
+					return;
 				} else {
 					if (
-						industryValues.some((r: string) => subsectorValues.indexOf(r) >= 0)
+						subsectorValues.some((r: string) => industryValues.indexOf(r) >= 0)
 					) {
 						XLSX.utils.sheet_add_aoa(industries, [[subsectorId]], {
 							origin: `B${industryId}`,
 						});
 
-						count++;
+						foundIds.push(industryId);
+						return;
 					}
 				}
 			}
@@ -57,7 +70,7 @@ Object.keys(subsectors).map((cell: string) => {
 	}
 });
 
-console.log(`${count} subsectors added to industries`);
+console.log(`${foundIds.length} subsectors added to industries`);
 
 XLSX.writeFile(
 	{ Sheets: { Sheet1: industries }, SheetNames: ["Sheet1"] },
