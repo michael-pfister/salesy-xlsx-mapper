@@ -22,26 +22,35 @@ Object.keys(subsectors).map((cell: string) => {
 			};
 
 			if (industryType === "s" && industryValue) {
-				if (
-					industryValue
-						.toLowerCase()
-						.split(" ")
-						.filter((word: string) => word !== "and")
-						.map((word: string) => word.replaceAll(",", ""))
-						.some(
-							(r: string) =>
-								subsectorValue
-									.toLowerCase()
-									.split(" ")
-									.map((word: string) => word.replaceAll(",", ""))
-									.indexOf(r) >= 0
-						)
-				) {
+				const industryValues: string[] = industryValue
+					.toLowerCase()
+					.split(" ")
+					.filter((word: string) => word !== "and")
+					.map((word: string) => word.replaceAll(",", ""));
+
+				const subsectorValues: string[] = subsectorValue
+					.toLowerCase()
+					.split(" ")
+					.filter((word: string) => word !== "and")
+					.map((word: string) => word.replaceAll(",", ""));
+
+				// prioritize exact match
+				if (industryValues.join(' ') === subsectorValues.join(' ')) {
 					XLSX.utils.sheet_add_aoa(industries, [[subsectorId]], {
 						origin: `B${industryId}`,
 					});
 
 					count++;
+				} else {
+					if (
+						industryValues.some((r: string) => subsectorValues.indexOf(r) >= 0)
+					) {
+						XLSX.utils.sheet_add_aoa(industries, [[subsectorId]], {
+							origin: `B${industryId}`,
+						});
+
+						count++;
+					}
 				}
 			}
 		});
