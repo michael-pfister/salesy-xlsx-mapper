@@ -63,3 +63,14 @@ XLSX.writeFile(
 	{ Sheets: { Sheet1: industries }, SheetNames: ["Sheet1"] },
 	"linkedin_industries_new.xlsx"
 );
+
+// summarize this program
+/**
+ * 1. read subsectors and industries
+ * 2. loop through subsectors
+ * 3. loop through industries
+ * 4. if subsector value is included in industry value, add subsector id to industry
+ * 5. write new industries file
+ * 6. log number of subsectors added to industries
+ * 7. done
+ */
