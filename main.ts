@@ -23,14 +23,6 @@ Object.keys(subsectors).map((cell: string) => {
 
 			if (industryType === "s" && industryValue) {
 				if (
-					industryValue.toLowerCase().includes(subsectorValue.toLowerCase())
-				) {
-					XLSX.utils.sheet_add_aoa(industries, [[subsectorId]], {
-						origin: `B${industryId}`,
-					});
-
-					count++;
-				} else if (
 					industryValue
 						.toLowerCase()
 						.split(" ")
