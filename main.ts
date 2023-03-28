@@ -4,7 +4,9 @@ import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.19.2/package/xlsx.mjs";
 const subsectors = XLSX.readFile("linkedin_subsectors.csv").Sheets["Sheet1"];
 const industries = XLSX.readFile("linkedin_industries.csv").Sheets["Sheet1"];
 
-const foundIds: number[] = [];
+const exactMatches: number[] = [];
+const goodMatches: number[] = [];
+const vagueMatches: number[] = [];
 
 Object.keys(industries).map((cell: string) => {
 	const { industryId, industryType, industryValue } = {
@@ -24,7 +26,7 @@ Object.keys(industries).map((cell: string) => {
 			if (
 				subsectorType === "s" &&
 				subsectorValue &&
-				!foundIds.includes(industryId)
+				!exactMatches.includes(industryId)
 			) {
 				const subsectorValues: string[] = subsectorValue
 					.toLowerCase()
@@ -38,31 +40,44 @@ Object.keys(industries).map((cell: string) => {
 					.filter((word: string) => word !== "and")
 					.map((word: string) => word.replaceAll(",", ""));
 
-				if (
-					subsectorValues.join(" ") === "capital markets" &&
-					industryValues.join(" ") === "capital markets"
-				) {
-					console.log(subsectorValues, industryValues);
-				}
-
 				// prioritize exact match
 				if (subsectorValues.join(" ") === industryValues.join(" ")) {
 					XLSX.utils.sheet_add_aoa(industries, [[subsectorId]], {
 						origin: `B${industryId}`,
 					});
+					XLSX.utils.sheet_add_aoa(industries, [[subsectorValue]], {
+						origin: `C${industryId}`,
+					});
 
-					foundIds.push(industryId);
+					exactMatches.push(industryId);
 					return;
 				} else {
 					if (
-						subsectorValues.some((r: string) => industryValues.indexOf(r) >= 0)
+						subsectorValues.some(
+							(r: string) => industryValues.indexOf(r) >= 0
+						) &&
+						!goodMatches.includes(industryId)
 					) {
 						XLSX.utils.sheet_add_aoa(industries, [[subsectorId]], {
 							origin: `B${industryId}`,
 						});
+						XLSX.utils.sheet_add_aoa(industries, [[subsectorValue]], {
+							origin: `C${industryId}`,
+						});
 
-						foundIds.push(industryId);
-						return;
+						if (
+							subsectorValues.filter((word) => industryValues.includes(word))
+								.length === subsectorValues.length
+						) {
+							exactMatches.push(industryId);
+						} else if (
+							subsectorValues.filter((word) => industryValues.includes(word))
+								.length > 1
+						) {
+							goodMatches.push(industryId);
+						} else if (!vagueMatches.includes(industryId)) {
+							vagueMatches.push(industryId);
+						}
 					}
 				}
 			}
@@ -70,7 +85,9 @@ Object.keys(industries).map((cell: string) => {
 	}
 });
 
-console.log(`${foundIds.length} subsectors added to industries`);
+console.log(`${exactMatches.length} exact matches found`);
+console.log(`${goodMatches.length} good matches found`);
+console.log(`${vagueMatches.length} vague matches found`);
 
 XLSX.writeFile(
 	{ Sheets: { Sheet1: industries }, SheetNames: ["Sheet1"] },
